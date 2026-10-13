@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <string>
@@ -313,7 +314,7 @@ void test_all_auxiliary_and_face_button_combinations_are_reserved()
         {{10, 15}, {10, 16}, {10, 17}, {10, 18}},
         {{10, 23}, {10, 24}, {10, 25}, {10, 26}},
         {{10, 35}, {10, 36}, {10, 37}, {10, 38}},
-        {{10, 6}, {10, 5}, {10, 7}, {10, 8}},
+        {{10, 57}, {10, 56}, {10, 58}, {10, 55}},
         {{10, 19}, {10, 20}, {10, 21}, {10, 22}},
         {{10, 27}, {10, 28}, {10, 29}, {10, 30}},
         {{10, 39}, {10, 40}, {10, 41}, {10, 42}},
@@ -367,6 +368,89 @@ void test_all_auxiliary_and_face_button_combinations_are_reserved()
     }
 }
 
+void test_keyboard_dance_shortcuts_replace_legacy_action_shortcuts()
+{
+    struct ExpectedShortcut
+    {
+        const char * signal;
+        int value;
+    };
+
+    const ExpectedShortcut expected[] = {
+        {"keyboard.dance_3", 55},
+        {"keyboard.dance_5", 56},
+        {"keyboard.dance_6", 57},
+        {"keyboard.dance_7", 58},
+        {"keyboard.normal_depth", 7},
+    };
+
+    const RemoteConfig config = remote_controller::load_remote_config(
+        REMOTE_CONTROLLER_TEST_CONFIG_PATH);
+
+    for (const ExpectedShortcut & shortcut : expected) {
+        InputMapper mapper(config);
+        mapper.set_signal(shortcut.signal, 1.0);
+        communication::msg::MotionCommands message;
+        mapper.fill_message(message);
+        expect(message.btn_10 == shortcut.value);
+        expect(message.btn_7 == 0);
+        expect(message.btn_8 == 0);
+    }
+
+    {
+        InputMapper mapper(config);
+        mapper.set_signal("keyboard.normal_run", 1.0);
+        communication::msg::MotionCommands message;
+        mapper.fill_message(message);
+        expect(message.btn_7 == 0);
+        expect(message.btn_10 == 0);
+    }
+
+    {
+        InputMapper mapper(config);
+        mapper.set_signal("keyboard.amp_run", 1.0);
+        communication::msg::MotionCommands message;
+        mapper.fill_message(message);
+        expect(message.btn_8 == 0);
+        expect(message.btn_10 == 0);
+    }
+}
+
+void test_xbox_elrs_crsf_buttons_use_bit_packed_sources()
+{
+    const RemoteConfig config = remote_controller::load_remote_config(
+        REMOTE_CONTROLLER_TEST_CONFIG_PATH);
+
+    {
+        InputMapper mapper(config);
+        const std::vector<std::string> outputs =
+            mapper.set_signal("crsf.xbox.button.back", 1.0);
+        expect(
+            std::find(outputs.begin(), outputs.end(), "system.stop") !=
+            outputs.end());
+    }
+
+    {
+        InputMapper mapper(config);
+        const std::vector<std::string> outputs =
+            mapper.set_signal("crsf.xbox.button.start", 1.0);
+        expect(
+            std::find(outputs.begin(), outputs.end(), "system.start") !=
+            outputs.end());
+    }
+
+    {
+        InputMapper mapper(config);
+        mapper.set_signals({
+            {"crsf.xbox.button.rb", 1.0},
+            {"crsf.xbox.button.x", 1.0},
+        });
+        communication::msg::MotionCommands message;
+        mapper.fill_message(message);
+        expect(message.btn_1 == 1);
+    }
+}
+
 }  // namespace
 
 int main()
@@ -378,5 +462,7 @@ int main()
     test_filtered_analog_snaps_zero_without_blocking_valid_input();
     test_three_button_chord_excludes_two_button_x_chords();
     test_all_auxiliary_and_face_button_combinations_are_reserved();
+    test_keyboard_dance_shortcuts_replace_legacy_action_shortcuts();
+    test_xbox_elrs_crsf_buttons_use_bit_packed_sources();
     return 0;
 }

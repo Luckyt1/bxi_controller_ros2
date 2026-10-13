@@ -47,16 +47,6 @@ events:
   toggle_pause:
     slot: btn_9
     value: 1
-  applause:
-    slot: btn_10
-    value: 5
-  hello:
-    slot: btn_10
-    value: 6
-  lie_down:
-    slot: btn_10
-    value: 8
-
 speed_profiles:
   normal:
     vx_scale: 1.0
@@ -91,12 +81,27 @@ states:
       priority: 990
       group: Base
       icon: do_not_disturb_on
+      confirm: true
+      confirm_message: 所有电机进入零力矩模式，机器人将完全失去支撑能力，请确保机器人处于安全状态
+  imu_protection:
+    manifest:
+      label: IMU失联保护
+      priority: 2000
+      group: Safety
+      icon: health_and_safety
+      confirm_message: imu故障，不可恢复状态
+    params:
+      # Hold the pose at IMU loss with low stiffness to resist natural falling.
+      kp: 20.0
+      kd: 1.0
   pd_brake:
     manifest:
       label: 初始姿态
       priority: 980
       group: Base
       icon: settings_backup_restore
+      confirm: true
+      confirm_message: 机器人将进入初始姿态，所有电机进入PD制动模式，失去支撑能力，请确保机器人处于安全状态
   initial_pos:
     manifest:
       label: 零位模式
@@ -139,29 +144,6 @@ states:
       confirm: true
       confirm_message: 高速跑步2m/s，没有越障能力
     speed_profile: normal_run
-  applause:
-    manifest:
-      label: 鼓掌
-      priority: 880
-      group: Gesture
-      icon: cheer
-    speed_profile: normal
-  hello:
-    manifest:
-      label: 挥手
-      priority: 870
-      group: Gesture
-      icon: waving_hand
-    speed_profile: normal
-  lie_down:
-    manifest:
-      label: 躺下
-      priority: 860
-      group: Advanced
-      icon: rotate_right
-      confirm: true
-      confirm_message: 请确保机器人前方3米范围内没有障碍物
-
 routes:
   - from: pd_brake
     event: normal
@@ -245,31 +227,6 @@ routes:
     to: normal
     transition: soft_switch
 
-  - from: normal
-    event: applause
-    to: applause
-    transition: dual_running_blend
-  - from: applause
-    event: normal
-    to: normal
-    transition:
-      profile: dual_running_blend
-      duration: 1.0
-  - from: normal
-    event: hello
-    to: hello
-    transition: dual_running_blend
-  - from: hello
-    event: normal
-    to: normal
-    transition:
-      profile: dual_running_blend
-      duration: 1.0
-  - from: normal
-    event: lie_down
-    to: lie_down
-    transition: soft_switch
-
 actions:
   - from: normal
     event: navigation_control
@@ -282,15 +239,5 @@ actions:
     manifest:
       label: 暂停/继续
       ui: pause
-  - from: applause
-    event: toggle_pause
-    action: toggle_pause
-    manifest:
-      label: 暂停/继续
-      ui: pause
-  - from: hello
-    event: toggle_pause
-    action: toggle_pause
-    manifest:
-      label: 暂停/继续
-      ui: pause
+      confirm: true
+      confirm_message: 确保机器人姿势安全后再继续播放舞蹈动作

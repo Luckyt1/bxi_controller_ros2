@@ -1,0 +1,202 @@
+schema: 1
+id: com.bxi.dances
+name: 原版四舞蹈
+version: 1.0.0
+api: ">=4,<5"
+enable: true
+entrypoint: plugin:create_mod
+visibility: public
+requires:
+  - id: com.bxi.basic_actions
+    version: ">=1,<2"
+conflicts: []
+python_exports: []
+runtime_requirements:
+  python: []
+  ros: []
+  system: []
+
+# 保留原项目 RT+Y/B/A/X；使用新编号避免和目标已有 Mod 事件冲突。
+events:
+  dance_3:
+    slot: btn_10
+    value: 55
+  dance_5:
+    slot: btn_10
+    value: 56
+  dance_6:
+    slot: btn_10
+    value: 57
+  dance_7:
+    slot: btn_10
+    value: 58
+
+transition_profiles:
+  dance_entry:
+    type: running_blend
+    duration: 0.3
+    curve: smootherstep
+    sample_from: true
+    sample_to: true
+    advance_from: true
+    advance_to: true
+
+states:
+  # start_frame：从0编号的起始帧（含该帧）；0从头播放，默认10，60比默认少播1秒。
+  # end_trim_frames：从动作末尾裁掉的帧数（50帧=1秒）；0表示不裁剪。
+  # 两项必须为非负整数，并且 start_frame + end_trim_frames < 动作总帧数。
+  dance_part_3:
+    params:
+      start_frame: 10
+      end_trim_frames: 50  # 50 Hz，裁掉最后1秒
+      ble_enabled: true
+      ble_trigger_frames: [900]  # 动作帧号，50帧=1秒；可填多个，[]表示不发送
+      ble_mac: "E0:72:A1:D8:39:8E"
+      ble_characteristic: "0000ee01-0000-1000-8000-00805f9b34fb"
+    manifest:
+      label: 跳舞片段3
+      priority: 850
+      group: Advanced
+      icon: star_shine
+      confirm: true
+      confirm_message: 请确保机器人周围1米范围内没有障碍物
+  dance_part_5:
+    params:
+      start_frame: 50
+      end_trim_frames: 50  # 50 Hz，裁掉最后1秒
+      ble_enabled: true
+      ble_trigger_frames: [1000]  # 提前1秒减50，延后1秒加50
+      ble_mac: "E0:72:A1:D8:39:8E"
+      ble_characteristic: "0000ee01-0000-1000-8000-00805f9b34fb"
+    manifest:
+      label: 跳舞片段5
+      priority: 840
+      group: Advanced
+      icon: star_shine
+      confirm: true
+      confirm_message: 请确保机器人周围1米范围内没有障碍物
+  dance_part_6:
+    params:
+      start_frame: 10
+      end_trim_frames: 0
+    manifest:
+      label: 机械舞
+      priority: 830
+      group: Advanced
+      icon: star_shine
+      confirm: true
+      confirm_message: 请确保机器人周围1米范围内没有障碍物
+  dance_part_7:
+    params:
+      start_frame: 10
+      end_trim_frames: 0
+    manifest:
+      label: lichenxi舞蹈
+      priority: 820
+      group: Advanced
+      icon: star_shine
+      confirm: true
+      confirm_message: 请确保机器人周围1米范围内没有障碍物
+
+routes:
+  - from: com.bxi.basic_actions/normal
+    event: dance_3
+    to: dance_part_3
+    transition: dance_entry
+  - from: com.bxi.basic_actions/normal
+    event: dance_5
+    to: dance_part_5
+    transition: dance_entry
+  - from: com.bxi.basic_actions/normal
+    event: dance_6
+    to: dance_part_6
+    transition: dance_entry
+  - from: com.bxi.basic_actions/normal
+    event: dance_7
+    to: dance_part_7
+    transition: dance_entry
+
+  - from: dance_part_3
+    event: dance_3
+    to: dance_part_3
+    transition: dance_entry
+  - from: dance_part_3
+    event: dance_5
+    to: dance_part_5
+    transition: dance_entry
+  - from: dance_part_5
+    event: dance_3
+    to: dance_part_3
+    transition: dance_entry
+  - from: dance_part_5
+    event: dance_5
+    to: dance_part_5
+    transition: dance_entry
+
+  - from: dance_part_3
+    event: com.bxi.basic_actions/normal
+    to: com.bxi.basic_actions/normal
+    transition:
+      profile: dual_running_blend
+      duration: 0.3
+  - from: dance_part_5
+    event: com.bxi.basic_actions/normal
+    to: com.bxi.basic_actions/normal
+    transition:
+      profile: dual_running_blend
+      duration: 0.3
+  - from: dance_part_6
+    event: com.bxi.basic_actions/normal
+    to: com.bxi.basic_actions/normal
+    transition:
+      profile: dual_running_blend
+      duration: 0.3
+  - from: dance_part_7
+    event: com.bxi.basic_actions/normal
+    to: com.bxi.basic_actions/normal
+    transition:
+      profile: dual_running_blend
+      duration: 0.3
+
+  - from: dance_part_3
+    event: com.bxi.basic_actions/zero_torque
+    to: com.bxi.basic_actions/zero_torque
+    transition: instant
+  - from: dance_part_5
+    event: com.bxi.basic_actions/zero_torque
+    to: com.bxi.basic_actions/zero_torque
+    transition: instant
+  - from: dance_part_6
+    event: com.bxi.basic_actions/zero_torque
+    to: com.bxi.basic_actions/zero_torque
+    transition: instant
+  - from: dance_part_7
+    event: com.bxi.basic_actions/zero_torque
+    to: com.bxi.basic_actions/zero_torque
+    transition: instant
+
+actions:
+  - from: dance_part_3
+    event: com.bxi.basic_actions/toggle_pause
+    action: toggle_pause
+    manifest:
+      label: 暂停/继续
+      ui: pause
+  - from: dance_part_5
+    event: com.bxi.basic_actions/toggle_pause
+    action: toggle_pause
+    manifest:
+      label: 暂停/继续
+      ui: pause
+  - from: dance_part_6
+    event: com.bxi.basic_actions/toggle_pause
+    action: toggle_pause
+    manifest:
+      label: 暂停/继续
+      ui: pause
+  - from: dance_part_7
+    event: com.bxi.basic_actions/toggle_pause
+    action: toggle_pause
+    manifest:
+      label: 暂停/继续
+      ui: pause

@@ -64,7 +64,7 @@ class HumanoidGaitPolicyLiteIsaaclab(JointPolicy):
 
         # Number of actions and observations.
         # 960/1020D policies are full-body models. 540D policies are no-arm
-        # models and only command waist + legs; applause overlays the arms.
+        # models and only command waist + legs.
         self._full_count = self._parameters.layout.dof_num
 
         # The model input width selects the 540D, 960D or 1020D layout.
