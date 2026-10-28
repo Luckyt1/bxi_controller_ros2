@@ -6,8 +6,8 @@
 
 | 原动作 | 手柄（USB / CRSF） | 键盘 | 目标事件 | 动作 / 模型 |
 | --- | --- | --- | --- | --- |
-| 跳舞片段3 | RT+Y | 4 | btn_10=55 | face3.npz / face3new.onnx |
-| 跳舞片段5 | RT+B | 5 | btn_10=56 | face4.npz / face4-1.onnx |
+| 跳舞片段3 | RT+Y | 4 | btn_10=55 | face3.npz / face3_17k.onnx |
+| 跳舞片段5 | RT+B | 5 | btn_10=56 | face4.npz / face4_4k.onnx |
 | 机械舞 | RT+A | 8 | btn_10=57 | jixiewu.npz / jixiewu2.onnx |
 | lichenxi舞蹈 | RT+X | 9 | btn_10=58 | lichenxi.npz / lichenxi3.onnx |
 
@@ -15,8 +15,11 @@
 RB+X / 键盘 1 返回行走，RB+A 切零力矩。播放结束自动回到行走；姿态超限
 沿用目标框架的零力矩保护。片段3与片段5保留原项目的互切和重播入口。
 
-沿用原始 `DanceMotionPolicyGravityIsaaclabV2` 的模型语义：默认从第10帧开始、
-固定参考朝向、50 Hz 动作时间线，以及0.3秒 smootherstep 动态混合切入。
+片段3和片段5使用 `DanceMotionPolicyGravityIsaaclabV3`，分别部署
+`face3_17k.onnx` 和 `face4_4k.onnx`。
+目标关节位置为默认姿态加缩放后的动作输出；其余两个舞蹈沿用
+`DanceMotionPolicyGravityIsaaclabV2`，目标位置为模型参考关节位置加缩放后的动作输出。
+默认从第10帧开始、固定参考朝向、50 Hz 动作时间线，以及0.3秒 smootherstep 动态混合切入。
 手动返回行走和播放结束返回也使用0.3秒过渡。
 模型由目标框架在后台按需加载；首次选择动作需等待资源准备完成。
 
@@ -94,9 +97,12 @@ ble_trigger_frames: [1000]
 
 ```bash
 source /opt/ros/humble/setup.bash
-colcon build --symlink-install --packages-up-to bxi_example_py_elf3 remote_controller
+colcon build --packages-up-to bxi_example_py_elf3 remote_controller
 source install/setup.bash
 ```
+
+使用完整复制安装；当前框架会校验资产解析后的路径，`--symlink-install`
+生成的逐文件资产链接可能被判定为超出 Mod 的 `assets/` 目录。
 
 重新启动控制器和遥控节点后生效。向其他目标工作区复制时，需要同时复制
 本 mod 目录和本次更新后的 `src/remote_controller/config/xbox_default.yaml`。

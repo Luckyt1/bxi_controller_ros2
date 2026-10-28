@@ -11,19 +11,25 @@ from bxi_example_py_elf3.framework.mod_api.transition import (
     MotorFrame,
     RunningFrameProvider,
 )
-from bxi_example_py_elf3.policies import DanceMotionPolicyGravityIsaaclabV2
+from bxi_example_py_elf3.policies import (
+    DanceMotionPolicyGravityIsaaclabV2,
+    DanceMotionPolicyGravityIsaaclabV3,
+)
 
 from .ble import BleFrameTrigger
 
 
+DancePolicy = DanceMotionPolicyGravityIsaaclabV2 | DanceMotionPolicyGravityIsaaclabV3
+
+
 class DanceState(RobotControlState, EntryFrameProvider, RunningFrameProvider):
-    """Play one original V2 motion using the target Mod lifecycle."""
+    """Play a V2 or V3 motion using the target Mod lifecycle."""
 
     def __init__(
         self,
         name: str,
         state_id: int,
-        policy: ResourceHandle[DanceMotionPolicyGravityIsaaclabV2],
+        policy: ResourceHandle[DancePolicy],
         *,
         ble_trigger: BleFrameTrigger,
         start_frame: int = 10,
@@ -42,7 +48,7 @@ class DanceState(RobotControlState, EntryFrameProvider, RunningFrameProvider):
         self._motion_frame = float(self.start_frame)
 
     @property
-    def policy(self) -> DanceMotionPolicyGravityIsaaclabV2:
+    def policy(self) -> DancePolicy:
         return self._policy.get()
 
     def on_prepare(

@@ -8,24 +8,27 @@ from bxi_example_py_elf3.framework.mod_api import (
     ResourceHandle,
     StateBuildContext,
 )
-from bxi_example_py_elf3.policies import DanceMotionPolicyGravityIsaaclabV2
+from bxi_example_py_elf3.policies import (
+    DanceMotionPolicyGravityIsaaclabV2,
+    DanceMotionPolicyGravityIsaaclabV3,
+)
 
 from .ble import BleFrameTrigger
-from .state import DanceState
+from .state import DancePolicy, DanceState
 
 
 MOTIONS = {
-    "dance_part_3": ("face3.npz", "face3new.onnx"),
-    "dance_part_5": ("face4.npz", "face4-1.onnx"),
-    "dance_part_6": ("jixiewu.npz", "jixiewu2.onnx"),
-    "dance_part_7": ("lichenxi.npz", "lichenxi3.onnx"),
+    "dance_part_3": ("face3.npz", "face3_17k.onnx", DanceMotionPolicyGravityIsaaclabV3),
+    "dance_part_5": ("face4.npz", "face4_4k.onnx", DanceMotionPolicyGravityIsaaclabV3),
+    "dance_part_6": ("jixiewu.npz", "jixiewu2.onnx", DanceMotionPolicyGravityIsaaclabV2),
+    "dance_part_7": ("lichenxi.npz", "lichenxi3.onnx", DanceMotionPolicyGravityIsaaclabV2),
 }
 
 
 def _build_state(
     state: StateBuildContext,
     *,
-    policy: ResourceHandle[DanceMotionPolicyGravityIsaaclabV2],
+    policy: ResourceHandle[DancePolicy],
 ) -> DanceState:
     trigger_frames = state.param("ble_trigger_frames", list, [])
     if any(type(frame) is not int or frame < 0 for frame in trigger_frames):
@@ -51,9 +54,13 @@ def _build_state(
 
 
 def _load_policy(
-    context: ResourceLoadContext, *, motion: str, model: str
-) -> DanceMotionPolicyGravityIsaaclabV2:
-    return DanceMotionPolicyGravityIsaaclabV2(
+    context: ResourceLoadContext,
+    *,
+    motion: str,
+    model: str,
+    policy_type: type[DancePolicy],
+) -> DancePolicy:
+    return policy_type(
         str(context.asset(f"assets/{motion}")),
         str(context.asset(f"assets/{model}")),
         start_frame=10,
@@ -63,12 +70,12 @@ def _load_policy(
 
 def create_mod(context: ModLoadContext) -> ModDefinition:
     factories = {}
-    for name, (motion, model) in MOTIONS.items():
-        key = ResourceKey[DanceMotionPolicyGravityIsaaclabV2](
-            f"{context.mod_id}/{name}/policy"
-        )
+    for name, (motion, model, policy_type) in MOTIONS.items():
+        key = ResourceKey[DancePolicy](f"{context.mod_id}/{name}/policy")
         context.register_resource(
-            key, partial(_load_policy, motion=motion, model=model), policy="on_demand"
+            key,
+            partial(_load_policy, motion=motion, model=model, policy_type=policy_type),
+            policy="on_demand",
         )
         handle = context.resource(key)
         factories[name] = partial(_build_state, policy=handle)

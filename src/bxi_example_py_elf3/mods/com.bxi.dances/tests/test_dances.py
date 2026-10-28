@@ -16,6 +16,10 @@ from bxi_example_py_elf3.framework.inference import InferenceFrame
 from bxi_example_py_elf3.framework.joints import JointStateBuffer
 from bxi_example_py_elf3.framework.mod_api import ModLoadContext, StateBuildContext
 from bxi_example_py_elf3.framework.runtime.resource_manager import ResourceManager
+from bxi_example_py_elf3.policies import (
+    DanceMotionPolicyGravityIsaaclabV2,
+    DanceMotionPolicyGravityIsaaclabV3,
+)
 
 
 MOD_ROOT = Path(__file__).resolve().parents[1]
@@ -127,10 +131,19 @@ def control_context(policy):
     )
 
 
-@pytest.mark.parametrize("name", plugin.MOTIONS)
-def test_real_models_play_pause_finish_and_reenter(definitions, name):
+@pytest.mark.parametrize(
+    "name,expected_policy",
+    [
+        ("dance_part_3", DanceMotionPolicyGravityIsaaclabV3),
+        ("dance_part_5", DanceMotionPolicyGravityIsaaclabV3),
+        ("dance_part_6", DanceMotionPolicyGravityIsaaclabV2),
+        ("dance_part_7", DanceMotionPolicyGravityIsaaclabV2),
+    ],
+)
+def test_real_models_play_pause_finish_and_reenter(definitions, name, expected_policy):
     state = build_state(definitions, name)
     policy = state.policy
+    assert type(policy) is expected_policy
     ctx = control_context(policy)
     state.on_prepare(ctx, Mock())
     assert policy.fixed_pos
